@@ -16,7 +16,7 @@
 
 - 🧙 **AI-Powered Storytelling** — Real-time narration powered by **Ollama LLMs**
 - 🎙️ **Voice Narration** — Text-to-speech via **AllTalk TTS**
-- 👥 **Multiplayer Support** — 2–5 players, turn-based adventure
+- 👥 **Locally only multiplayer Support** — 2–5 players, turn-based adventure
 - 🎭 **Character Creation** — 20+ classes from 4 genres: *Fantasy*, *Sci-Fi*, *Cyberpunk*, *Post-Apocalyptic*
 - 🌍 **Dynamic World System** — Permanent world state changes
 - 💰 **Economy System** — Class-specific currencies and gear
