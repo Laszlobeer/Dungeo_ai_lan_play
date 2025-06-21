@@ -18,6 +18,7 @@ logging.basicConfig(filename=log_filename, level=logging.ERROR,
 # API URLs
 ALLTALK_API_URL = "http://localhost:7851/api/tts-generate"
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
+
 #getting the models from ollama
 def get_installed_models():
     try:
@@ -57,7 +58,7 @@ def count_subarrays(arr, k):
     return total
 
 installed_models = get_installed_models()
-ollama_model = "llama3:instruct" ##<-- defult model
+ollama_model = "llama3:instruct"  # Default model
 
 if installed_models:
     print("Available Ollama models:")
@@ -741,6 +742,7 @@ GENRE_LOCATIONS = {
         "Salvager's Guild Hall"
     ]
 }
+
 def get_role_starter(genre, role):
     if genre in ROLE_STARTERS and role in ROLE_STARTERS[genre]:
         return ROLE_STARTERS[genre][role]
@@ -1263,6 +1265,23 @@ def update_world_state(action, response, player_choices, genre, current_player):
     for obj in taken_matches:
         player_choices['objects'][obj.strip()] = "taken"
 
+def get_round_summary(conversation, player_choices, genre, starting_location, party):
+    """Generate a summary of the round's actions and progress the story"""
+    currency_name = CURRENCY_MAP.get(genre, "currency")
+    player_names = [name for name, _ in party]
+    player_classes = [pc for _, pc in party]
+    
+    summary_prompt = (
+        f"{DM_SYSTEM_PROMPT.format(num_players=len(party), player_names=', '.join(player_names), player_classes=', '.join(player_classes), starting_location=starting_location, currency_name=currency_name)}\n\n"
+        f"### Current World State ###\n{get_current_state(player_choices, genre)}\n\n"
+        f"{conversation}\n"
+        f"### Additional Instruction ###\n"
+        f"The party has completed a full round of actions. As the Dungeon Master, summarize the consequences of their choices and progress the story naturally to the next significant event or challenge.\n"
+        f"Dungeon Master:"
+    )
+    
+    return get_ai_response(summary_prompt)
+
 def main():
     global ollama_model
     last_ai_reply = ""
@@ -1271,6 +1290,7 @@ def main():
     last_player_input = ""
     current_player_index = 0
     last_player_name = None
+    round_count = 0  # Track rounds for DM narration
     
     party = []
     num_players = 0
@@ -1456,25 +1476,21 @@ def main():
         
         locations = GENRE_LOCATIONS.get(selected_genre, [])
         if not locations:
-            locations = [
-                "Unknown Location 1", "Unknown Location 2", "Unknown Location 3",
-                "Unknown Location 4", "Unknown Location 5", "Unknown Location 6",
-                "Unknown Location 7", "Unknown Location 8", "Unknown Location 9",
-                "Unknown Location 10"
-            ]
+            # Create 25 generic locations if none defined
+            locations = [f"Location {i}" for i in range(1, 26)]
             
         print("\nChoose a starting location:")
         for idx, loc in enumerate(locations, 1):
             print(f"{idx}: {loc}")
             
         while True:
-            choice = input("Enter location number (1-10): ").strip()
+            choice = input(f"Enter location number (1-{len(locations)}): ").strip()
             if choice.isdigit():
                 idx = int(choice) - 1
-                if 0 <= idx < 10:
+                if 0 <= idx < len(locations):
                     starting_location = locations[idx]
                     break
-            print("Invalid choice. Please enter a number between 1 and 10.")
+            print(f"Invalid choice. Please enter a number between 1 and {len(locations)}.")
         
         starter = get_role_starter(selected_genre, "any")
         starting_scenario = f"{starter} at {starting_location}."
@@ -1768,7 +1784,37 @@ def main():
                 
                 update_world_state(user_input, ai_reply, player_choices, selected_genre, current_player_name)
                 
+                # Move to next player
                 current_player_index = (current_player_index + 1) % num_players
+                
+                # After all players have taken a turn, add DM narration
+                if current_player_index == 0:
+                    round_count += 1
+                    print(f"\n--- Round {round_count} Complete ---")
+                    
+                    # Generate DM narration for the round
+                    round_summary = get_round_summary(
+                        conversation, 
+                        player_choices, 
+                        selected_genre, 
+                        starting_location, 
+                        party
+                    )
+                    
+                    if round_summary:
+                        round_summary = sanitize_response(round_summary)
+                        print(f"\nDungeon Master (Round Summary): {round_summary}")
+                        speak(round_summary)
+                        
+                        # Update conversation and world state
+                        conversation += f"\nDungeon Master (Round Summary): {round_summary}"
+                        update_world_state(
+                            "Round Summary", 
+                            round_summary, 
+                            player_choices, 
+                            selected_genre, 
+                            "System"
+                        )
 
         except Exception as e:
             logging.error(f"Unexpected error in main loop: {e}")
