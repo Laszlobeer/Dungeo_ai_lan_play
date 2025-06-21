@@ -18,7 +18,7 @@ logging.basicConfig(filename=log_filename, level=logging.ERROR,
 # API URLs
 ALLTALK_API_URL = "http://localhost:7851/api/tts-generate"
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
-
+#getting the models from ollama
 def get_installed_models():
     try:
         result = subprocess.run(
@@ -57,7 +57,7 @@ def count_subarrays(arr, k):
     return total
 
 installed_models = get_installed_models()
-ollama_model = "llama3:instruct"
+ollama_model = "llama3:instruct" ##<-- defult model
 
 if installed_models:
     print("Available Ollama models:")
@@ -134,7 +134,7 @@ CLASS_ABILITIES = {
             "magic": True
         },
         "Cleric": {
-            "abilities": ["Divine Magic", "Healing", "Faith"],  # Fixed key name
+            "abilities": ["Divine Magic", "Healing", "Faith"],
             "weapons": ["mace", "warhammer", "staff"],
             "armor": ["chainmail", "plate"],
             "magic": True
@@ -304,7 +304,7 @@ CLASS_ABILITIES = {
             "magic": False
         },
         "Quantum Hacker": {
-            "abilities": ["System Penetration", "Data Theft", "Firewall Breach"],  # Fixed key name
+            "abilities": ["System Penetration", "Data Theft", "Firewall Breach"],
             "weapons": ["cyberdeck", "logic bomb"],
             "armor": ["data suit"],
             "magic": False
@@ -313,7 +313,7 @@ CLASS_ABILITIES = {
             "abilities": ["Market Analysis", "Bartering", "Supply Chain"],
             "weapons": ["pistol", "credit chip"],
             "armor": ["business attire"],
-            "magic": False  # Fixed value
+            "magic": False
         },
         "AI Specialist": {
             "abilities": ["Neural Networks", "Machine Learning", "AI Ethics"],
@@ -461,7 +461,7 @@ CLASS_ABILITIES = {
             "abilities": ["Adrenaline Rush", "Pain Resistance", "Frenzy"],
             "weapons": ["axe", "sledgehammer", "chainsaw"],
             "armor": ["scrap metal"],
-            "magic": False  # Fixed value
+            "magic": False
         },
         "Soldier": {
             "abilities": ["Combat Training", "Tactics", "Weapon Proficiency"],
@@ -771,7 +771,7 @@ def get_class_description(genre, player_class):
 genres = {
     "1": ("Fantasy", [
         "Noble", "Peasant", "Mage", "Knight", "Ranger", "Alchemist", "Thief", "Bard",
-        "Cleric", "Druid", "Assassin", "Paladin", "Warlock", "Monk", "Sorcerer",  # Fixed class name
+        "Cleric", "Druid", "Assassin", "Paladin", "Warlock", "Monk", "Sorcerer",
         "Beastmaster", "Enchanter", "Blacksmith", "Merchant", "Gladiator", "Wizard"
     ]),
     "2": ("Sci-Fi", [
@@ -1191,26 +1191,28 @@ def update_world_state(action, response, player_choices, genre, current_player):
         if current_player in player_choices['currency']:
             player_choices['currency'][current_player] = max(0, player_choices['currency'][current_player] - int(amount))
     
+    # Improved pattern for multi-word locations
     world_event_matches = re.findall(
-        r'(?:The|A|An) (\w+ \w+) (?:is|has been|becomes) (destroyed|created|changed|revealed|altered|ruined|rebuilt)',
+        r'(?:The|A|An) ([A-Za-z\s]+) (?:is|has been|becomes) (destroyed|created|changed|revealed|altered|ruined|rebuilt)',
         response, 
         re.IGNORECASE
     )
     for location, event in world_event_matches:
-        player_choices['world_events'].append(f"{location} {event}")
+        player_choices['world_events'].append(f"{location.strip()} {event}")
     
+    # Improved quest detection patterns
     if "quest completed" in response.lower() or "completed the quest" in response.lower():
-        quest_match = re.search(r'quest ["\']?(.*?)["\']? (?:is|has been) completed', response, re.IGNORECASE)
+        quest_match = re.search(r'quest ["\']?(.*?)["\']? (?:is|has been)? completed', response, re.IGNORECASE)
         if quest_match:
-            quest_name = quest_match.group(1)
+            quest_name = quest_match.group(1).strip()
             if quest_name in player_choices['active_quests']:
                 player_choices['active_quests'].remove(quest_name)
                 player_choices['completed_quests'].append(quest_name)
     
-    if "new quest" in response.lower() or "quest started" in response.lower():
-        quest_match = re.search(r'quest ["\']?(.*?)["\']? (?:is|has been) (?:given|started)', response, re.IGNORECASE)
+    if "new quest" in response.lower() or "quest started" in response.lower() or "quest given" in response.lower():
+        quest_match = re.search(r'quest ["\']?(.*?)["\']? (?:is|has been)? (?:given|started)', response, re.IGNORECASE)
         if quest_match:
-            quest_name = quest_match.group(1)
+            quest_name = quest_match.group(1).strip()
             if quest_name not in player_choices['active_quests'] and quest_name not in player_choices['completed_quests']:
                 player_choices['active_quests'].append(quest_name)
     
@@ -1244,21 +1246,22 @@ def update_world_state(action, response, player_choices, genre, current_player):
         if discovery not in player_choices['discoveries']:
             player_choices['discoveries'].append(discovery)
     
+    # Improved patterns for multi-word objects
     destroyed_matches = re.findall(
-        r'(?:destroy|break|smash) (?:the |a |an )?(\w+)', 
+        r'(?:destroy|break|smash) (?:the |a |an )?([\w\s]+)', 
         action, 
         re.IGNORECASE
     )
     for obj in destroyed_matches:
-        player_choices['objects'][obj] = "destroyed"
+        player_choices['objects'][obj.strip()] = "destroyed"
     
     taken_matches = re.findall(
-        r'(?:take|steal|grab|pick up) (?:the |a |an )?(\w+)', 
+        r'(?:take|steal|grab|pick up) (?:the |a |an )?([\w\s]+)', 
         action, 
         re.IGNORECASE
     )
     for obj in taken_matches:
-        player_choices['objects'][obj] = "taken"
+        player_choices['objects'][obj.strip()] = "taken"
 
 def main():
     global ollama_model
@@ -1332,45 +1335,51 @@ def main():
                     
                     if "### Persistent World State ###" in content:
                         state_section = content.split("### Persistent World State ###")[1]
-                        # Load currency per player
-                        currency_lines = state_section.split("Currency (")[1].split("\n")[0]
-                        currency_pattern = r"- (.+?): (\d+)"
-                        currency_matches = re.findall(currency_pattern, currency_lines)
-                        for player, amount in currency_matches:
-                            player_choices['currency'][player] = int(amount)
+                        
+                        # Improved state parsing
+                        if "Currency (" in state_section:
+                            currency_section = state_section.split("Currency (")[1]
+                            currency_name = currency_section.split("):")[0]
+                            currency_lines = currency_section.split("):")[1]
+                            currency_pattern = r"- (.+?): (\d+)"
+                            currency_matches = re.findall(currency_pattern, currency_lines)
+                            for player, amount in currency_matches:
+                                player_choices['currency'][player] = int(amount)
                             
                         if "Allies:" in state_section:
                             allies_line = state_section.split("Allies:")[1].split("\n")[0].strip()
                             if allies_line != "None":
                                 player_choices['allies'] = [a.strip() for a in allies_line.split(",")]
+                        
                         if "Enemies:" in state_section:
                             enemies_line = state_section.split("Enemies:")[1].split("\n")[0].strip()
                             if enemies_line != "None":
                                 player_choices['enemies'] = [e.strip() for e in enemies_line.split(",")]
+                        
                         if "Resources:" in state_section:
-                            resources_lines = state_section.split("Resources:")[1].split("\n")
-                            for line in resources_lines:
-                                if line.strip().startswith("-"):
-                                    parts = line.strip().split(":")
-                                    if len(parts) >= 2:
-                                        resource = parts[0].replace("-", "").strip()
-                                        amount = parts[1].strip()
-                                        if amount.isdigit():
-                                            player_choices['resources'][resource] = int(amount)
+                            resources_section = state_section.split("Resources:")[1]
+                            if "Faction Relationships:" in resources_section:
+                                resources_section = resources_section.split("Faction Relationships:")[0]
+                            resource_pattern = r"- (.+?): (\d+)"
+                            resource_matches = re.findall(resource_pattern, resources_section)
+                            for resource, amount in resource_matches:
+                                player_choices['resources'][resource.strip()] = int(amount)
+                        
                         if "Consequences:" in state_section:
-                            cons_lines = state_section.split("Consequences:")[1].split("\n")
-                            for line in cons_lines:
-                                if line.strip().startswith("-"):
-                                    player_choices['consequences'].append(line.replace("-", "").strip())
+                            cons_section = state_section.split("Consequences:")[1]
+                            if "Object States:" in cons_section:
+                                cons_section = cons_section.split("Object States:")[0]
+                            cons_pattern = r"- (.+)"
+                            cons_matches = re.findall(cons_pattern, cons_section)
+                            for cons in cons_matches:
+                                player_choices['consequences'].append(cons.strip())
+                        
                         if "Object States:" in state_section:
-                            obj_lines = state_section.split("Object States:")[1].split("\n")
-                            for line in obj_lines:
-                                if line.strip().startswith("-"):
-                                    parts = line.strip().split(":")
-                                    if len(parts) >= 2:
-                                        obj = parts[0].replace("-", "").strip()
-                                        status = parts[1].strip()
-                                        player_choices['objects'][obj] = status
+                            obj_section = state_section.split("Object States:")[1]
+                            obj_pattern = r"- (.+?): (.+)"
+                            obj_matches = re.findall(obj_pattern, obj_section)
+                            for obj, status in obj_matches:
+                                player_choices['objects'][obj.strip()] = status.strip()
             except Exception as e:
                 logging.error(f"Error loading adventure: {e}")
                 print("Error loading adventure. Details logged.")
@@ -1634,45 +1643,51 @@ def main():
                         
                         if "### Persistent World State ###" in content:
                             state_section = content.split("### Persistent World State ###")[1]
-                            # Load currency per player
-                            currency_lines = state_section.split("Currency (")[1].split("\n")[0]
-                            currency_pattern = r"- (.+?): (\d+)"
-                            currency_matches = re.findall(currency_pattern, currency_lines)
-                            for player, amount in currency_matches:
-                                player_choices['currency'][player] = int(amount)
+                            
+                            # Improved state parsing
+                            if "Currency (" in state_section:
+                                currency_section = state_section.split("Currency (")[1]
+                                currency_name = currency_section.split("):")[0]
+                                currency_lines = currency_section.split("):")[1]
+                                currency_pattern = r"- (.+?): (\d+)"
+                                currency_matches = re.findall(currency_pattern, currency_lines)
+                                for player, amount in currency_matches:
+                                    player_choices['currency'][player] = int(amount)
                                 
                             if "Allies:" in state_section:
                                 allies_line = state_section.split("Allies:")[1].split("\n")[0].strip()
                                 if allies_line != "None":
                                     player_choices['allies'] = [a.strip() for a in allies_line.split(",")]
+                            
                             if "Enemies:" in state_section:
                                 enemies_line = state_section.split("Enemies:")[1].split("\n")[0].strip()
                                 if enemies_line != "None":
                                     player_choices['enemies'] = [e.strip() for e in enemies_line.split(",")]
+                            
                             if "Resources:" in state_section:
-                                resources_lines = state_section.split("Resources:")[1].split("\n")
-                                for line in resources_lines:
-                                    if line.strip().startswith("-"):
-                                        parts = line.strip().split(":")
-                                        if len(parts) >= 2:
-                                            resource = parts[0].replace("-", "").strip()
-                                            amount = parts[1].strip()
-                                            if amount.isdigit():
-                                                player_choices['resources'][resource] = int(amount)
+                                resources_section = state_section.split("Resources:")[1]
+                                if "Faction Relationships:" in resources_section:
+                                    resources_section = resources_section.split("Faction Relationships:")[0]
+                                resource_pattern = r"- (.+?): (\d+)"
+                                resource_matches = re.findall(resource_pattern, resources_section)
+                                for resource, amount in resource_matches:
+                                    player_choices['resources'][resource.strip()] = int(amount)
+                            
                             if "Consequences:" in state_section:
-                                cons_lines = state_section.split("Consequences:")[1].split("\n")
-                                for line in cons_lines:
-                                    if line.strip().startswith("-"):
-                                        player_choices['consequences'].append(line.replace("-", "").strip())
+                                cons_section = state_section.split("Consequences:")[1]
+                                if "Object States:" in cons_section:
+                                    cons_section = cons_section.split("Object States:")[0]
+                                cons_pattern = r"- (.+)"
+                                cons_matches = re.findall(cons_pattern, cons_section)
+                                for cons in cons_matches:
+                                    player_choices['consequences'].append(cons.strip())
+                            
                             if "Object States:" in state_section:
-                                obj_lines = state_section.split("Object States:")[1].split("\n")
-                                for line in obj_lines:
-                                    if line.strip().startswith("-"):
-                                        parts = line.strip().split(":")
-                                        if len(parts) >= 2:
-                                            obj = parts[0].replace("-", "").strip()
-                                            status = parts[1].strip()
-                                            player_choices['objects'][obj] = status
+                                obj_section = state_section.split("Object States:")[1]
+                                obj_pattern = r"- (.+?): (.+)"
+                                obj_matches = re.findall(obj_pattern, obj_section)
+                                for obj, status in obj_matches:
+                                    player_choices['objects'][obj.strip()] = status.strip()
                     except Exception as e:
                         logging.error(f"Error loading adventure: {e}")
                         print("Error loading adventure. Details logged.")
