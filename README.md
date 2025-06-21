@@ -2,7 +2,7 @@
 # 🧝 RPG Adventure Game with AI Dungeon Master
 
 
-![Project Banner](yyqWt5B.png)
+![Project Banner](./yyqWt5B.png)
 
 
 
