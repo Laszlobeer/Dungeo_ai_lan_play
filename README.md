@@ -167,16 +167,4 @@ Buy me a coffee & keep the adventure alive 💖
 
 ---
 
-````
-
----
-
-### 📦 `requirements.txt`
-```txt
-requests
-sounddevice
-numpy
-````
-
-```
 
