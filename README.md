@@ -1,9 +1,9 @@
 
 # 🧝 RPG Adventure Game with AI Dungeon Master
 
-## Preview
 
-![Project Banner](https://i.imgur.com/XXXXXXXX.jpg)
+![Project Banner](./images/yyqWt5B.png)
+
 
 
 ⚔️ A text-based lan multiplayer RPG where players create characters and embark on an AI-generated adventure. Featuring an AI Dungeon Master powered by LLMs, immersive storytelling, and real-time voice narration!
