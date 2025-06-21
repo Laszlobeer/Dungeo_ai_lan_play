@@ -27,22 +27,34 @@
 
 ## 🛠️ Installation
 
-### ✅ Prerequisites
-- Python 3.8+
-- [🧠 Ollama](https://ollama.ai/)
-- [🗣️ AllTalk TTS](https://github.com/erew123/alltalk_tts)
+### ✅ Requirements
+
+* Python 3.8+
+* [🧠 Ollama](https://ollama.ai/)
+* [🗣️ AllTalk TTS](https://github.com/erew123/alltalk_tts)
+
+### 📥 Clone the Repository
+
+```bash
+git clone https://github.com/Laszlobeer/Dungeo_ai_lan_play.git
+cd Dungeo_ai_lan_play
+```
 
 ### 📦 Install Dependencies
 
 ```bash
 pip install -r requirements.txt
-````
+```
 
 ### ▶️ Run the Game
 
 ```bash
 python main.py
 ```
+
+
+If you want, I can add a full updated README with this included, just say!
+
 
 ---
 
