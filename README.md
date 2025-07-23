@@ -8,7 +8,7 @@
 
 ⚔️ A text-based lan multiplayer RPG where players create characters and embark on an AI-generated adventure. Featuring an AI Dungeon Master powered by LLMs, immersive storytelling, and real-time voice narration!
 
-> **Support this project ☕** [Buy me a coffee on Ko-fi!](https://ko-fi.com/laszlobeer)
+
 
 ---
 
@@ -160,10 +160,6 @@ This project is licensed under the [MIT License](LICENSE)
 ---
 
 
-### ☕ Like this project?
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/laszlobeer)
-Buy me a coffee & keep the adventure alive 💖
 
 ---
 
